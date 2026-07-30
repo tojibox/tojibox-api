@@ -1,0 +1,120 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [{ "name": "_oracle", "type": "address", "internalType": "address" }],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "mintReceipt",
+    "inputs": [
+      { "name": "to", "type": "address", "internalType": "address" },
+      { "name": "reportHash", "type": "bytes32", "internalType": "bytes32" },
+      { "name": "pin", "type": "string", "internalType": "string" },
+      { "name": "generatedAt", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [{ "name": "tokenId", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "reports",
+    "inputs": [{ "name": "", "type": "bytes32", "internalType": "bytes32" }],
+    "outputs": [
+      { "name": "reportHash", "type": "bytes32", "internalType": "bytes32" },
+      { "name": "pin", "type": "string", "internalType": "string" },
+      { "name": "oracleAddress", "type": "address", "internalType": "address" },
+      { "name": "generatedAt", "type": "string", "internalType": "string" }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "reportToTokenId",
+    "inputs": [{ "name": "", "type": "bytes32", "internalType": "bytes32" }],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "nextTokenId",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "oracle",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setOracle",
+    "inputs": [{ "name": "_oracle", "type": "address", "internalType": "address" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [{ "name": "newOwner", "type": "address", "internalType": "address" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "ownerOf",
+    "inputs": [{ "name": "tokenId", "type": "uint256", "internalType": "uint256" }],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "balanceOf",
+    "inputs": [{ "name": "owner", "type": "address", "internalType": "address" }],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "name",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "symbol",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "ReportMinted",
+    "inputs": [
+      { "name": "tokenId", "type": "uint256", "indexed": true, "internalType": "uint256" },
+      { "name": "reportHash", "type": "bytes32", "indexed": true, "internalType": "bytes32" },
+      { "name": "pin", "type": "string", "indexed": false, "internalType": "string" }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OracleUpdated",
+    "inputs": [
+      { "name": "previous", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "next", "type": "address", "indexed": true, "internalType": "address" }
+    ],
+    "anonymous": false
+  }
+]

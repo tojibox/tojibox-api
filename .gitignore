@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+.venv/
+venv/
+*.egg-info/
+dist/
+*.log
+.DS_Store
+
+node_modules/
+contracts/artifacts/
+contracts/cache/
