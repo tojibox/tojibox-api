@@ -6,9 +6,15 @@ const GIWA_ORACLE_PRIVATE_KEY = process.env.GIWA_ORACLE_PRIVATE_KEY || "";
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    // 0.8.24, not 0.8.20 — @openzeppelin/contracts v5's ERC721.sol requires
+    // a ^0.8.24 compiler. The contract's own pragma (^0.8.20) still allows
+    // this newer compiler; only the pinned compiler version needed bumping.
+    version: "0.8.24",
     settings: {
       optimizer: { enabled: true, runs: 200 },
+      // OpenZeppelin v5 uses MCOPY (EIP-5656, Cancun). GIWA is an OP-Stack
+      // chain on a Cancun-or-later execution client, so this is safe.
+      evmVersion: "cancun",
     },
   },
   networks: {
