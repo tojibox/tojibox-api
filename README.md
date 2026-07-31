@@ -76,7 +76,7 @@ tojibox-api/
 | GET | `/api/oracle/parcels/search` | free | Search parcels by address |
 | GET | `/api/oracle/parcels/{pin}` | free | Parcel details |
 | GET | `/api/oracle/parcels/{pin}/history/peek` | free | Petition count preview |
-| GET | `/api/oracle/parcels/{pin}/history` | **x402 (0.001 ETH)** | Full rezoning history + signed report + on-chain receipt |
+| GET | `/api/oracle/parcels/{pin}/history` | **x402 (0.0001 ETH)** | Full rezoning history + signed report + on-chain receipt |
 | GET | `/api/oracle/verify/{report_hash}` | free | Verify a report seal (local registry, falls back to on-chain) |
 
 ## Local setup
@@ -121,7 +121,7 @@ node server.js
 | `GIWA_ORACLE_ADDRESS` | Oracle wallet address (must match the private key) |
 | `TOJIBOX_REPORT_RECEIPT_ADDRESS` | Deployed `TojiboxReportReceipt` contract address |
 | `ORACLE_ENS` | Optional ENS name for the oracle (none registered yet) |
-| `X402_PRICE_WEI` | Price to unlock `/parcels/{pin}/history`, in wei (default 0.001 ETH) |
+| `X402_PRICE_WEI` | Price to unlock `/parcels/{pin}/history`, in wei (default 0.0001 ETH) |
 | `ORACLE_URL` | Base URL the MCP server queries (mcp/server.js) |
 | `GIWA_PRIVATE_KEY` | Wallet the MCP server pays x402 from (mcp/server.js) |
 | `ETH_NETWORK` / `ETH_RPC_URL` | Ethereum L1/testnet RPC used only for ENS resolution (unrelated to GIWA) |

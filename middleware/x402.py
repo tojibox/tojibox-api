@@ -32,7 +32,7 @@ from web3 import Web3
 
 GIWA_RPC_URL       = os.getenv("GIWA_RPC_URL", "https://sepolia-rpc.giwa.io/")
 RECEIVER_ADDRESS   = os.getenv("GIWA_ORACLE_ADDRESS", "").lower()
-PAYMENT_WEI        = int(os.getenv("X402_PRICE_WEI", "1000000000000000"))   # 0.001 ETH
+PAYMENT_WEI        = int(os.getenv("X402_PRICE_WEI", "100000000000000"))   # 0.0001 ETH
 MAX_TX_AGE_SECS    = 300   # payment must be within last 5 minutes
 
 # GIWA's RPC can have a little propagation lag between "tx broadcast" and
