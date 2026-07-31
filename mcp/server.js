@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Togibox Oracle MCP Server — Flow B (Agentic)
+ * Tojibox Oracle MCP Server — Flow B (Agentic)
  *
  * Exposes parcel query tools to any MCP-compatible LLM (Claude, etc).
  * When the oracle returns HTTP 402, this server autonomously pays ETH on
@@ -36,7 +36,7 @@ const GIWA_RPC_URL = process.env.GIWA_RPC_URL    || "https://sepolia-rpc.giwa.io
 const PRIVATE_KEY  = process.env.GIWA_PRIVATE_KEY;
 
 if (!PRIVATE_KEY) {
-  process.stderr.write("ERROR: GIWA_PRIVATE_KEY must be set in togibox-api/.env\n");
+  process.stderr.write("ERROR: GIWA_PRIVATE_KEY must be set in tojibox-api/.env\n");
   process.exit(1);
 }
 
@@ -68,9 +68,9 @@ process.stderr.write(`[ens] Using ${ETH_NETWORK} ENS via ${ETH_RPC}\n`);
  *   key:   "parcel.pin"
  *   value: "0768487494"
  *
- * NOTE: no ENS name is registered for Togibox itself yet — the old
+ * NOTE: no ENS name is registered for Tojibox itself yet — the old
  * "zoneproof.eth" demo entry from the source project is intentionally
- * dropped here rather than renamed to a "togibox.eth" that doesn't exist.
+ * dropped here rather than renamed to a "tojibox.eth" that doesn't exist.
  */
 const DEMO_ENS_MAP = {
   // Sepolia-registered names
@@ -175,7 +175,7 @@ async function fetchWithX402Payment(url) {
 
 // ── MCP Server ────────────────────────────────────────────────────────────────
 const server = new McpServer({
-  name: "togibox-oracle",
+  name: "tojibox-oracle",
   version: "1.0.0",
 });
 
@@ -315,7 +315,7 @@ server.tool(
 
       if (res.status === 404) {
         return {
-          content: [{ type: "text", text: `No rezoning history found for PIN ${pin}. This parcel has no recorded petitions on Togibox.` }],
+          content: [{ type: "text", text: `No rezoning history found for PIN ${pin}. This parcel has no recorded petitions on Tojibox.` }],
         };
       }
 
@@ -406,4 +406,4 @@ server.tool(
 // ── Start ─────────────────────────────────────────────────────────────────────
 const transport = new StdioServerTransport();
 await server.connect(transport);
-process.stderr.write("Togibox Oracle MCP server ready (stdio)\n");
+process.stderr.write("Tojibox Oracle MCP server ready (stdio)\n");

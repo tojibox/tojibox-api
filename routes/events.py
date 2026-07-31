@@ -1,5 +1,5 @@
 """
-/api/oracle/pending-events   <- called by the pipeline/committer (togibox-scraper)
+/api/oracle/pending-events   <- called by the pipeline/committer (tojibox-scraper)
 /api/oracle/events           <- full change event log
 
 Both are backed by live Postgres (store.py), filtered on the GIWA-specific

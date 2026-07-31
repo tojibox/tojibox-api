@@ -1,8 +1,8 @@
 """
-Togibox Oracle API
+Tojibox Oracle API
 -------------------
 Lightweight FastAPI server exposing oracle data for:
-  - the pipeline / committer (togibox-scraper) → GET /api/oracle/pending-events
+  - the pipeline / committer (tojibox-scraper) → GET /api/oracle/pending-events
   - Frontend / external consumers               → parcel history, petition details
 
 Ported from ZoneProof's oracle/api/main.py — same shape, rebranded.
@@ -23,8 +23,8 @@ from routes import events, parcels, petitions, health
 from middleware.x402 import X402Middleware
 
 app = FastAPI(
-    title="Togibox Oracle API",
-    description="Oracle data layer for Togibox (GIWA L2) — change events, parcel history, petition registry",
+    title="Tojibox Oracle API",
+    description="Oracle data layer for Tojibox (GIWA L2) — change events, parcel history, petition registry",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",

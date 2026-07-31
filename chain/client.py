@@ -1,8 +1,8 @@
 """
-GIWA on-chain client for the Togibox Oracle API.
+GIWA on-chain client for the Tojibox Oracle API.
 
-Thin web3.py wrapper around TogiboxReportReceipt.sol (see
-contracts/src/TogiboxReportReceipt.sol) so routes/parcels.py can mint a
+Thin web3.py wrapper around TojiboxReportReceipt.sol (see
+contracts/src/TojiboxReportReceipt.sol) so routes/parcels.py can mint a
 report receipt and read it back directly from GIWA state, in-process — no
 sidecar process, unlike the Hedera version this replaces
 (oracle/hedera/service.mjs, a Node process wrapping @hashgraph/sdk).
@@ -13,7 +13,7 @@ Env vars (see .env.example):
   GIWA_EXPLORER_URL                — https://sepolia-explorer.giwa.io
   GIWA_ORACLE_PRIVATE_KEY          — signs mintReceipt() calls
   GIWA_ORACLE_ADDRESS              — default recipient of minted receipts
-  TOGIBOX_REPORT_RECEIPT_ADDRESS   — deployed contract address
+  TOJIBOX_REPORT_RECEIPT_ADDRESS   — deployed contract address
 """
 import json
 import os
@@ -27,9 +27,9 @@ CHAIN_ID          = int(os.getenv("GIWA_CHAIN_ID", "91342"))
 
 ORACLE_PRIVATE_KEY       = os.getenv("GIWA_ORACLE_PRIVATE_KEY", "")
 ORACLE_ADDRESS            = os.getenv("GIWA_ORACLE_ADDRESS", "")
-RECEIPT_CONTRACT_ADDRESS = os.getenv("TOGIBOX_REPORT_RECEIPT_ADDRESS", "")
+RECEIPT_CONTRACT_ADDRESS = os.getenv("TOJIBOX_REPORT_RECEIPT_ADDRESS", "")
 
-_ABI_PATH = Path(__file__).parent / "abi" / "TogiboxReportReceipt.json"
+_ABI_PATH = Path(__file__).parent / "abi" / "TojiboxReportReceipt.json"
 with open(_ABI_PATH) as _f:
     RECEIPT_ABI = json.load(_f)
 
@@ -46,8 +46,8 @@ if RECEIPT_CONTRACT_ADDRESS:
 def _get_contract():
     if _contract is None:
         raise RuntimeError(
-            "TOGIBOX_REPORT_RECEIPT_ADDRESS is not configured — deploy "
-            "contracts/src/TogiboxReportReceipt.sol and set the address in .env"
+            "TOJIBOX_REPORT_RECEIPT_ADDRESS is not configured — deploy "
+            "contracts/src/TojiboxReportReceipt.sol and set the address in .env"
         )
     return _contract
 
@@ -59,7 +59,7 @@ def _to_bytes32(report_hash: str) -> bytes:
 
 def mint_receipt(pin: str, report_hash: str, oracle_address: str, generated_at: str) -> dict:
     """
-    Mint a TogiboxReportReceipt NFT recording this report on-chain.
+    Mint a TojiboxReportReceipt NFT recording this report on-chain.
 
     Returns {"token_id": int, "tx_hash": str, "explorer_url": str}.
 
@@ -113,7 +113,7 @@ def mint_receipt(pin: str, report_hash: str, oracle_address: str, generated_at: 
 def get_report(report_hash: str):
     """
     Read the on-chain Report struct for a given report hash from
-    TogiboxReportReceipt's public `reports` mapping.
+    TojiboxReportReceipt's public `reports` mapping.
 
     Returns a dict {report_hash, pin, oracle_address, generated_at,
     token_id} or None if unset (all-zero struct) or the contract isn't

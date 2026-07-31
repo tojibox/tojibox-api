@@ -1,7 +1,7 @@
 {
-  "name": "togibox-report-receipt-contracts",
+  "name": "tojibox-report-receipt-contracts",
   "version": "1.0.0",
-  "description": "TogiboxReportReceipt ERC-721 contract — GIWA Sepolia (OP-Stack EVM L2)",
+  "description": "TojiboxReportReceipt ERC-721 contract — GIWA Sepolia (OP-Stack EVM L2)",
   "scripts": {
     "compile": "hardhat compile",
     "deploy:testnet": "hardhat run scripts/deploy.js --network giwaSepolia",

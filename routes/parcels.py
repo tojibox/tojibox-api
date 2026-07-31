@@ -1,7 +1,7 @@
 """
 /api/oracle/parcels/{pin}               <- parcel details
 /api/oracle/parcels/{pin}/history/peek  <- free preview
-/api/oracle/parcels/{pin}/history       <- full history (x402 gated) + Togibox seal
+/api/oracle/parcels/{pin}/history       <- full history (x402 gated) + Tojibox seal
 /api/oracle/verify/{report_hash}        <- verify a report seal
 """
 import hashlib
@@ -22,14 +22,14 @@ router = APIRouter(tags=["parcels"])
 # Fast local cache — same pattern as the ZoneProof/Hedera original, and the
 # same known limitation (wiped on restart). Unlike the original, this is no
 # longer the *only* source of truth: /verify/{hash} below also reads the
-# TogiboxReportReceipt contract on GIWA as a durable fallback, since minting
+# TojiboxReportReceipt contract on GIWA as a durable fallback, since minting
 # a receipt NFT already happens on every report generation (see
 # _record_onchain()).
 _REPORT_REGISTRY: dict[str, dict] = {}
 
 ORACLE_PRIVATE_KEY = os.getenv("GIWA_ORACLE_PRIVATE_KEY", "")
 ORACLE_ADDRESS     = os.getenv("GIWA_ORACLE_ADDRESS", "").lower()
-ORACLE_ENS         = os.getenv("ORACLE_ENS", "")  # no ENS name registered for Togibox yet
+ORACLE_ENS         = os.getenv("ORACLE_ENS", "")  # no ENS name registered for Tojibox yet
 
 
 def _sign_report(data: dict) -> dict:
@@ -56,7 +56,7 @@ def _sign_report(data: dict) -> dict:
     # ECDSA sign with oracle private key (Ethereum personal_sign / EIP-191)
     signature = ""
     if ORACLE_PRIVATE_KEY:
-        msg       = encode_defunct(text=f"Togibox Report\n{report_hash}")
+        msg       = encode_defunct(text=f"Tojibox Report\n{report_hash}")
         signed    = Account.sign_message(msg, private_key=ORACLE_PRIVATE_KEY)
         signature = signed.signature.hex()
         if not signature.startswith("0x"):
@@ -78,7 +78,7 @@ def _sign_report(data: dict) -> dict:
 
 def _record_onchain(pin: str, seal: dict) -> dict:
     """
-    Mint a TogiboxReportReceipt NFT on GIWA recording this report seal
+    Mint a TojiboxReportReceipt NFT on GIWA recording this report seal
     on-chain, calling chain/client.py directly in-process via web3.py.
 
     Replaces ZoneProof's _log_to_hedera(), which made two HTTP POSTs to a
@@ -142,7 +142,7 @@ def get_parcel_history_route(pin: str):
     if not result:
         raise HTTPException(status_code=404, detail=f"Parcel {pin} not found")
     seal = _sign_report(result)
-    # Mint the on-chain report receipt (TogiboxReportReceipt NFT on GIWA)
+    # Mint the on-chain report receipt (TojiboxReportReceipt NFT on GIWA)
     onchain_extras = _record_onchain(pin, seal)
     seal.update(onchain_extras)
     if seal["report_hash"] in _REPORT_REGISTRY:
@@ -154,11 +154,11 @@ def get_parcel_history_route(pin: str):
 @router.get("/verify/{report_hash}")
 def verify_report(report_hash: str):
     """
-    Verify a Togibox report seal — ECDSA signature + on-chain NFT receipt.
+    Verify a Tojibox report seal — ECDSA signature + on-chain NFT receipt.
 
     Checks the in-memory registry first (fast path, populated since the
     API last restarted). If not found there, falls back to reading the
-    TogiboxReportReceipt contract's public `reports` mapping directly on
+    TojiboxReportReceipt contract's public `reports` mapping directly on
     GIWA — this is the durability fix over the ZoneProof/Hedera original,
     whose verify endpoint only had the in-memory dict and would report
     "not found" for any report issued before the last restart.
@@ -197,7 +197,7 @@ def verify_report(report_hash: str):
     valid = False
     if ORACLE_PRIVATE_KEY and seal.get("oracle_signature"):
         try:
-            msg       = encode_defunct(text=f"Togibox Report\n{report_hash}")
+            msg       = encode_defunct(text=f"Tojibox Report\n{report_hash}")
             recovered = Account.recover_message(msg, signature=seal["oracle_signature"])
             valid     = recovered.lower() == ORACLE_ADDRESS
         except Exception:
@@ -216,7 +216,7 @@ def verify_report(report_hash: str):
         "pin":            seal["pin"],
         "site_address":   seal["site_address"],
         "generated_at":   seal["generated_at"],
-        "message":        "Authentic Togibox report" if valid else "Signature verification failed",
+        "message":        "Authentic Tojibox report" if valid else "Signature verification failed",
     }
 
     # On-chain NFT receipt

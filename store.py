@@ -1,5 +1,5 @@
 """
-Data store for the Togibox oracle API — backed entirely by the live
+Data store for the Tojibox oracle API — backed entirely by the live
 Postgres DB (see db.py). No JSON-file caching.
 
 This DB is shared with a separate, already-submitted Hedera-based
@@ -7,10 +7,10 @@ version of this project (same Supabase project, same parcels/
 rezoning_petitions/change_events tables). change_events therefore has
 TWO independent sets of "has this been committed on-chain" columns:
   - committed_at / batch_id / evm_snapshot_index   — that project's Hedera
-    pipeline; read-only from here, never written by Togibox.
+    pipeline; read-only from here, never written by Tojibox.
   - giwa_committed_at / giwa_batch_id / giwa_evm_snapshot_index — this
     project's GIWA pipeline (see migrations/009_add_giwa_columns.sql and
-    togibox-scraper/pipeline/processor.mjs, which is the only thing that
+    tojibox-scraper/pipeline/processor.mjs, which is the only thing that
     writes these). Every query below that means "committed on-chain"
     filters on the giwa_ columns, not the shared ones.
 

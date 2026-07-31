@@ -1,9 +1,9 @@
 """
-Database connection for the Togibox Oracle API — Postgres via psycopg2.
+Database connection for the Tojibox Oracle API — Postgres via psycopg2.
 
 Ported from ZoneProof's oracle/api/db.py. In the source repo this pulled
 DB_HOST/PORT/USER/PASSWORD/NAME from oracle/scrapers/config.py (shared with
-the scraper). togibox-api is a standalone repo without that module, so the
+the scraper). tojibox-api is a standalone repo without that module, so the
 env vars are read directly here instead — same names, same defaults-less
 behavior (no hardcoded secrets; set them in .env).
 """

@@ -1,5 +1,5 @@
 """
-x402 payment middleware for the Togibox Oracle API.
+x402 payment middleware for the Tojibox Oracle API.
 
 Flow:
   1. Client calls a protected endpoint (no X-Payment header)
@@ -72,7 +72,7 @@ def _payment_required_response(resource: str) -> JSONResponse:
                     "network":           "giwa-sepolia",
                     "maxAmountRequired": str(PAYMENT_WEI),
                     "resource":          resource,
-                    "description":       "Togibox Oracle — parcel rezoning history",
+                    "description":       "Tojibox Oracle — parcel rezoning history",
                     "mimeType":          "application/json",
                     "payTo":             RECEIVER_ADDRESS,
                     "maxTimeoutSeconds": MAX_TX_AGE_SECS,

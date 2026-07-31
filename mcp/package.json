@@ -1,7 +1,7 @@
 {
-  "name": "togibox-oracle-mcp",
+  "name": "tojibox-oracle-mcp",
   "version": "1.0.0",
-  "description": "Togibox Oracle MCP server — pays x402 ETH on GIWA Sepolia for parcel queries",
+  "description": "Tojibox Oracle MCP server — pays x402 ETH on GIWA Sepolia for parcel queries",
   "type": "module",
   "main": "server.js",
   "scripts": {
