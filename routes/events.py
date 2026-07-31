@@ -1,15 +1,17 @@
 """
 /api/oracle/pending-events   <- called by the pipeline/committer (togibox-scraper)
 /api/oracle/events           <- full change event log
+
+Both are backed by live Postgres (store.py), filtered on the GIWA-specific
+giwa_committed_at column — this DB is shared with a separate Hedera-based
+version of this project, which tracks its own commit status on a plain
+committed_at column for the same rows. See store.py's module docstring.
 """
 import hashlib
 from fastapi import APIRouter, Query
-from store import _change_events_raw, REZONING_PETITIONS
+from store import get_pending_events, list_events as store_list_events
 
 router = APIRouter(tags=["events"])
-
-_PETITIONS_BY_NUMBER = {p["petition_number"]: p for p in REZONING_PETITIONS}
-_PENDING_TYPES = {"new_petition", "petition_status_change", "petition_vote_change"}
 
 
 def _leaf_hash(event: dict) -> str:
@@ -24,28 +26,14 @@ def _leaf_hash(event: dict) -> str:
 
 
 @router.get("/pending-events")
-def get_pending_events(limit: int = Query(500, le=1000)):
-    pending = [
-        ev for ev in _change_events_raw
-        if not ev.get("committed_at") and ev.get("event_type") in _PENDING_TYPES
-    ]
-    pending_sorted = sorted(pending, key=lambda e: e.get("detected_at") or "")[:limit]
-
-    rows = []
-    for ev in pending_sorted:
-        petition = _PETITIONS_BY_NUMBER.get(ev.get("petition_number") or "")
+def get_pending_events_route(limit: int = Query(500, le=1000)):
+    rows = get_pending_events(limit=limit)
+    events = []
+    for ev in rows:
         row = dict(ev)
         row["leaf_hash"] = _leaf_hash(ev)
-        if petition:
-            row["current_zoning"]   = petition.get("current_zoning")
-            row["proposed_zoning"]  = petition.get("proposed_zoning")
-            row["petition_status"]  = petition.get("status")
-            row["meeting_date"]     = petition.get("meeting_date")
-            row["affected_pins"]    = petition.get("pins")
-            row["petition_address"] = petition.get("address")
-        rows.append(row)
-
-    return {"count": len(rows), "events": rows}
+        events.append(row)
+    return {"count": len(events), "events": events}
 
 
 @router.get("/events")
@@ -55,16 +43,7 @@ def list_events(
     limit: int = Query(100, le=500),
     offset: int = Query(0),
 ):
-    events = list(_change_events_raw)
-
-    if event_type:
-        events = [e for e in events if e.get("event_type") == event_type]
-    if committed is True:
-        events = [e for e in events if e.get("committed_at")]
-    elif committed is False:
-        events = [e for e in events if not e.get("committed_at")]
-
-    events = sorted(events, key=lambda e: e.get("detected_at") or "", reverse=True)
-    total = len(events)
-
-    return {"total": total, "limit": limit, "offset": offset, "events": events[offset: offset + limit]}
+    total, events = store_list_events(
+        event_type=event_type, committed=committed, limit=limit, offset=offset
+    )
+    return {"total": total, "limit": limit, "offset": offset, "events": events}

@@ -25,18 +25,22 @@ def list_petitions(
 
     where = " AND ".join(conditions)
 
+    # committed_at here means "committed to GIWA" — this DB is shared with a
+    # separate Hedera-based version of this project, which tracks its own
+    # commit status on change_events.committed_at (untouched) rather than
+    # giwa_committed_at (see store.py's module docstring).
     rows = query(f"""
         SELECT
             petition_number, county_id, status, action,
             current_zoning, proposed_zoning, vote_result,
             meeting_date, address,
             array_length(pins, 1) AS pin_count,
-            legislation_url, committed_at
+            legislation_url, ce.committed_at
         FROM rezoning_petitions rp
         LEFT JOIN LATERAL (
-            SELECT committed_at FROM change_events
+            SELECT giwa_committed_at AS committed_at FROM change_events
             WHERE petition_number = rp.petition_number
-              AND committed_at IS NOT NULL
+              AND giwa_committed_at IS NOT NULL
             LIMIT 1
         ) ce ON true
         WHERE {where}
@@ -84,15 +88,15 @@ def get_petition(petition_number: str):
             ORDER BY pin
         """, (pins,))
 
-    # On-chain proof if committed
-    # NOTE: hcs_sequence_number is dropped from change_events in the
-    # togibox-scraper schema (Hedera-only column, unused on GIWA).
+    # On-chain proof of GIWA commitment — giwa_batch_id/giwa_committed_at,
+    # not the shared committed_at/batch_id columns a separate Hedera-based
+    # version of this project tracks on the same rows (see store.py).
     chain_proof = query("""
-        SELECT batch_id, committed_at, event_type
+        SELECT giwa_batch_id AS batch_id, giwa_committed_at AS committed_at, event_type
         FROM change_events
         WHERE petition_number = %s
-          AND committed_at IS NOT NULL
-        ORDER BY committed_at DESC
+          AND giwa_committed_at IS NOT NULL
+        ORDER BY giwa_committed_at DESC
     """, (petition_number,))
 
     return {

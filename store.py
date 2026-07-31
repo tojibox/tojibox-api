@@ -1,53 +1,25 @@
 """
-Data store for the Togibox oracle API.
+Data store for the Togibox oracle API — backed entirely by the live
+Postgres DB (see db.py). No JSON-file caching.
 
-Parcel/petition lookups (used by routes/parcels.py) query the live
-Postgres DB directly — see db.py. The JSON files below remain as an
-in-memory cache for routes/events.py, which reads the full change-event /
-petition log on every request.
+This DB is shared with a separate, already-submitted Hedera-based
+version of this project (same Supabase project, same parcels/
+rezoning_petitions/change_events tables). change_events therefore has
+TWO independent sets of "has this been committed on-chain" columns:
+  - committed_at / batch_id / evm_snapshot_index   — that project's Hedera
+    pipeline; read-only from here, never written by Togibox.
+  - giwa_committed_at / giwa_batch_id / giwa_evm_snapshot_index — this
+    project's GIWA pipeline (see migrations/009_add_giwa_columns.sql and
+    togibox-scraper/pipeline/processor.mjs, which is the only thing that
+    writes these). Every query below that means "committed on-chain"
+    filters on the giwa_ columns, not the shared ones.
 
-NOTE: these two JSON files (rezoning_petitions.json, change_events.json)
-ideally would be read from Postgres too, same as the parcel/petition
-lookups below. Ported as-is from ZoneProof's oracle/api/store.py, which
-has this same split — not fixed here, kept behavior identical to the
-source. Populate them by copying togibox-scraper's exported JSON here if
-you want /events to serve real data; otherwise this degrades gracefully
-to empty lists (see _load()).
-
-Column names below (evm_tx_hash / evm_block on merkle_batches) match the
-renamed schema used by togibox-scraper's migrations (renamed from
-hedera_evm_tx_hash / hedera_evm_block in the ZoneProof/Hedera schema).
+merkle_batches is also shared, but each pipeline always inserts a fresh
+batch_id (UUID) per commit, so there's no row-level conflict there — only
+evm_tx_hash / evm_block (new, GIWA-specific) vs. hedera_evm_tx_hash /
+hedera_evm_block (untouched) distinguish which pipeline created a row.
 """
-import json
-import os
-
 from db import query as db_query
-
-_BASE = os.path.dirname(__file__)  # togibox-api/
-
-
-def _load(filename):
-    path = os.path.join(_BASE, filename)
-    try:
-        with open(path) as f:
-            data = json.load(f)
-        return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"[store] WARNING: could not load {filename}: {e}")
-        return []
-
-
-# ── Loaded once at import time — used by routes/events.py only ───────────────
-_petitions_raw      = _load("rezoning_petitions.json")
-_change_events_raw  = _load("change_events.json")
-
-REZONING_PETITIONS = _petitions_raw
-
-print(f"[store] Loaded  petitions={len(REZONING_PETITIONS):,}  "
-      f"change_events={len(_change_events_raw):,}")
-
-
-# ── Public API used by routes/parcels.py — backed by live Postgres ───────────
 
 _COMMITTED_EVENT_TYPES = ("new_petition", "petition_status_change", "petition_vote_change")
 
@@ -88,7 +60,7 @@ def get_parcel_history_peek(pin: str):
             SELECT COUNT(DISTINCT petition_number) AS c
             FROM change_events
             WHERE petition_number = ANY(%s)
-              AND committed_at IS NOT NULL
+              AND giwa_committed_at IS NOT NULL
               AND event_type IN %s
             """,
             (petition_numbers, _COMMITTED_EVENT_TYPES),
@@ -118,18 +90,22 @@ def get_parcel_history(pin: str):
     )
     petition_numbers = [p["petition_number"] for p in petitions]
 
-    # Most-recent committed change_event per petition
+    # Most-recent GIWA-committed change_event per petition
     latest_events = {}
     if petition_numbers:
         rows = db_query(
             """
             SELECT DISTINCT ON (petition_number)
-                petition_number, batch_id, committed_at, event_type, evm_snapshot_index
+                petition_number,
+                giwa_batch_id           AS batch_id,
+                giwa_committed_at       AS committed_at,
+                event_type,
+                giwa_evm_snapshot_index AS evm_snapshot_index
             FROM change_events
             WHERE petition_number = ANY(%s)
-              AND committed_at IS NOT NULL
+              AND giwa_committed_at IS NOT NULL
               AND event_type IN %s
-            ORDER BY petition_number, committed_at DESC
+            ORDER BY petition_number, giwa_committed_at DESC
             """,
             (petition_numbers, _COMMITTED_EVENT_TYPES),
         )
@@ -191,3 +167,64 @@ def get_parcel_history(pin: str):
         "total_petitions":  len(results),
         "on_chain_count":   len(on_chain),
     }
+
+
+# ── Change-event feed used by routes/events.py — backed by live Postgres ─────
+# (the pipeline's GET /pending-events call is what actually drives commits,
+# so this has to reflect real, current DB state — not a point-in-time export)
+
+_PENDING_EVENT_TYPES = ("new_petition", "petition_status_change", "petition_vote_change")
+
+
+def get_pending_events(limit: int = 500):
+    """Events not yet committed to GIWA, oldest first — what the pipeline commits next."""
+    rows = db_query(
+        """
+        SELECT ce.id, ce.event_type, ce.county_id, ce.pin, ce.petition_number,
+               ce.changed_fields, ce.before_state, ce.after_state, ce.detected_at,
+               rp.current_zoning, rp.proposed_zoning, rp.status AS petition_status,
+               rp.meeting_date, rp.pins AS affected_pins, rp.address AS petition_address
+        FROM change_events ce
+        LEFT JOIN rezoning_petitions rp ON rp.petition_number = ce.petition_number
+        WHERE ce.giwa_committed_at IS NULL
+          AND ce.event_type IN %s
+        ORDER BY ce.detected_at ASC
+        LIMIT %s
+        """,
+        (_PENDING_EVENT_TYPES, limit),
+    )
+    return rows
+
+
+def list_events(event_type: str = None, committed: bool = None, limit: int = 100, offset: int = 0):
+    """Full change-event log, newest first. `committed` filters on GIWA commit status."""
+    where  = ["1=1"]
+    params = []
+
+    if event_type:
+        where.append("event_type = %s")
+        params.append(event_type)
+    if committed is True:
+        where.append("giwa_committed_at IS NOT NULL")
+    elif committed is False:
+        where.append("giwa_committed_at IS NULL")
+
+    where_sql = " AND ".join(where)
+
+    total_rows = db_query(f"SELECT COUNT(*) AS c FROM change_events WHERE {where_sql}", params)
+    total = total_rows[0]["c"] if total_rows else 0
+
+    rows = db_query(
+        f"""
+        SELECT id, event_type, county_id, pin, petition_number, changed_fields,
+               before_state, after_state, detected_at, merkle_leaf_hash,
+               giwa_batch_id AS batch_id, giwa_committed_at AS committed_at,
+               giwa_evm_snapshot_index AS evm_snapshot_index
+        FROM change_events
+        WHERE {where_sql}
+        ORDER BY detected_at DESC
+        LIMIT %s OFFSET %s
+        """,
+        params + [limit, offset],
+    )
+    return total, rows

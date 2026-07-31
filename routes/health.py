@@ -12,7 +12,7 @@ def health():
             (SELECT COUNT(*) FROM rezoning_petitions) AS petitions,
             (SELECT COUNT(*) FROM change_events)      AS change_events,
             (SELECT COUNT(*) FROM change_events
-             WHERE committed_at IS NULL
+             WHERE giwa_committed_at IS NULL
                AND event_type IN (
                  'new_petition','petition_status_change','petition_vote_change'
                ))                                     AS pending_rezoning_events
