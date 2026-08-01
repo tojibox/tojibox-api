@@ -1,8 +1,11 @@
 # Deploying to Railway
 
-One service: the FastAPI oracle API. `Procfile` at the repo root already
-tells Railway how to start it (`web: uvicorn main:app --host 0.0.0.0 --port $PORT`),
-so this should deploy with no custom configuration beyond environment variables.
+One service: the FastAPI oracle API. A `Dockerfile` at the repo root builds
+and starts it (`uvicorn main:app --host 0.0.0.0 --port $PORT`) — Railway
+detects and uses it automatically, no build configuration needed beyond
+environment variables. (Not using Railway's auto-detected Python builder
+here: it doesn't include `libpq`, which `psycopg2-binary` needs at runtime,
+so the Dockerfile installs it explicitly via `apt-get install libpq5`.)
 
 ## Steps
 
